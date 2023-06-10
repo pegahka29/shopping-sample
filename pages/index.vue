@@ -2,8 +2,8 @@
   <div class="container">
     <div class="d-flex flex-column align-content-center justify-content-center">
       <h1 class="mt-3">Products</h1>
-      <div id="itemList" v-if="products && products.length > 0 && list" class="row">
-        <div v-for="product in list" :key="product.id" :per-page="perPage" class="col-md-4 mb-2">
+      <div id="itemList" v-if="products && products.length > 0" class="row">
+        <div v-for="product in products" :key="product.id" class="col-md-4 mb-2">
           <b-card :title="product.name" img-alt="Product image" img-top>
             <b-card-text>
               Name: {{ product.attributes.name }}
@@ -17,15 +17,16 @@
       </div>
       <div class="d-flex flex-column align-content-center justify-content-center mt-3">
         <b-pagination
+          v-if="!loading"
           class="d-flex align-content-center justify-content-center"
           v-model="currentPage"
           :total-rows="totalRows"
           :per-page="perPage"
           pills
+          @change="changePage"
           aria-controls="itemList"
         >
         </b-pagination>
-        <p class="mt-3 text-center">Current Page: {{ currentPage }}</p>
       </div>
       <b-button variant="primary" class="basket-icon" @click="$router.push('/card')">
         <b-icon-basket-fill></b-icon-basket-fill>
@@ -36,51 +37,63 @@
 </template>
 
 <script>
-import {ref, onMounted, computed} from 'vue'
+import {ref} from 'vue'
+import {useRoute, useRouter} from "@nuxtjs/composition-api"
+
 import axios from 'axios'
 
 export default {
   setup() {
+    const route = useRoute();
+    const router = useRouter();
+    const loading = ref(false)
     const products = ref({})
-    const currentPage = ref(1)
-    const perPage = ref(5)
+    const currentPage = ref(Number(route.value.query.page) || 1)
+    const perPage = ref(25)
+    const totalRows = ref(0)
+    let params = {
+      page:Number(route.value.query.page) || 1
+    }
 
-    onMounted(() => {
-      axios.get('https://demo.spreecommerce.org/api/v2/storefront/products')
+    const updateRouterQuery = () => {
+      if(Number(Number(route.value.query.page) !== currentPage.value)){
+        const query = {
+          page: currentPage.value,
+        }
+        router.replace({ query })
+      }
+    }
+    const getProducts = async () => {
+      loading.value = true;
+      axios.get(`https://demo.spreecommerce.org/api/v2/storefront/products?page=${params.page}`)
         .then(response => {
           products.value = response.data.data
+          totalRows.value = response.data.meta['total_count']
+          currentPage.value = params.page
+          updateRouterQuery()
         })
         .catch(error => {
           console.error(error)
         })
-    })
-    const totalRows = computed(() => {
-      if (products.value)
-        return products.value.length
-      else return 0
-    })
-    const list = computed(() => {
-      const items = products.value
-      return products.value.slice(
-        (currentPage.value - 1) * perPage.value,
-        currentPage.value * perPage.value
-      )
-    })
+        .finally(() => {
+          loading.value = false
+        })
+    }
+    const changePage = async (page) => {
+      params.page = page
+      await getProducts()
+    }
+
+    getProducts();
+
     return {
+      loading,
       products,
       currentPage,
       perPage,
       totalRows,
-      list
+      changePage,
     }
-  },
-  lists() {
-    const items = this.data;
-    // Return just page of items needed
-    return items.slice(
-      (this.currentPage - 1) * this.perPage,
-      this.currentPage * this.perPage
-    )
   },
 }
 </script>
