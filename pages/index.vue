@@ -2,9 +2,9 @@
   <div class="container">
     <div class="d-flex flex-column align-content-center justify-content-center">
       <h1 class="mt-3">Products</h1>
-      <div v-if="products && products.length > 0" class="row">
+      <div id="itemList" v-if="products && products.length > 0" class="row">
         <div v-for="product in products" :key="product.id" class="col-md-4 mb-2">
-          <b-card :title="product.attributes.name" img-alt="Product image" img-top>
+          <b-card :title="product.name" img-alt="Product image" img-top>
             <b-card-text>
               Name: {{ product.attributes.name }}
             </b-card-text>
@@ -13,10 +13,9 @@
             </b-card-text>
             <b-button
               :class="productCount(product) > 0 ? 'btn-success': 'btn-info'"
-              @click="addToCart(product)">Add to cart
-            </b-button>
+              @click="addToCart(product)">Add to card</b-button>
             <span v-if="productCount(product) > 0">
-              x {{ productCount(product) }}
+              x {{productCount(product)}}
               <b-button pill variant="outline-danger" @click="removeFromCart(product)">-</b-button>
             </span>
           </b-card>
@@ -31,6 +30,7 @@
           :per-page="perPage"
           pills
           @change="changePage"
+          aria-controls="itemList"
         >
         </b-pagination>
       </div>
@@ -44,17 +44,17 @@
 </template>
 
 <script>
-import {ref, onMounted, computed} from 'vue'
+import {ref, onMounted} from 'vue'
 import {useRoute, useRouter, useFetch} from "@nuxtjs/composition-api"
-import {useCartStore} from '~/stores/cart'
-import {storeToRefs} from 'pinia'
+import { useCartStore } from '~/stores/cart'
+import { storeToRefs } from 'pinia'
 
 import axios from 'axios'
 
 export default {
   setup() {
     const cartStore = useCartStore()
-    const {cart, cartLength, cartTotal} = storeToRefs(cartStore)
+    const { cart, cartLength, cartTotal } = storeToRefs(cartStore)
     const route = useRoute();
     const router = useRouter();
     const loading = ref(false)
@@ -63,14 +63,14 @@ export default {
     const perPage = ref(25)
     const totalRows = ref(0)
     let params = {
-      page: Number(route.value.query.page) || 1
+      page:Number(route.value.query.page) || 1
     }
     const updateRouterQuery = () => {
-      if (Number(Number(route.value.query.page) !== currentPage.value)) {
+      if(Number(Number(route.value.query.page) !== currentPage.value)){
         const query = {
           page: currentPage.value,
         }
-        router.replace({query})
+        router.replace({ query })
       }
     }
     const getProducts = async () => {
@@ -81,6 +81,7 @@ export default {
           totalRows.value = response.data.meta['total_count']
           currentPage.value = params.page
           updateRouterQuery()
+          scrollToTop()
         })
         .catch(error => {
           console.error(error)
@@ -102,9 +103,12 @@ export default {
     const productCount = (product) => {
       return cartStore.productCount(product)
     }
+    const scrollToTop =()=> {
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    }
 
     // getProducts();
-    const {fetch} = useFetch(async () => {
+    const { fetch } = useFetch(async () => {
       await getProducts()
     })
     fetch();
@@ -125,7 +129,8 @@ export default {
       changePage,
       addToCart,
       removeFromCart,
-      productCount
+      productCount,
+      scrollToTop,
     }
   },
 }
