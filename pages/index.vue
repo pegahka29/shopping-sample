@@ -2,7 +2,7 @@
   <div class="container">
     <div class="d-flex flex-column align-content-center justify-content-center">
       <h1 class="mt-3">Products</h1>
-      <div id="itemList" v-if="products && products.length > 0" class="row">
+      <div v-if="products && products.length > 0" class="row">
         <div v-for="product in products" :key="product.id" class="col-md-4 mb-2">
           <b-card :title="product.name" img-alt="Product image" img-top>
             <b-card-text>
@@ -11,7 +11,7 @@
             <b-card-text>
               Price: {{ product.attributes.price }}
             </b-card-text>
-            <b-button variant="primary">Add to card</b-button>
+            <b-button variant="primary">Add to cart</b-button>
           </b-card>
         </div>
       </div>
@@ -24,7 +24,6 @@
           :per-page="perPage"
           pills
           @change="changePage"
-          aria-controls="itemList"
         >
         </b-pagination>
       </div>
@@ -38,7 +37,7 @@
 
 <script>
 import {ref} from 'vue'
-import {useRoute, useRouter} from "@nuxtjs/composition-api"
+import {useRoute, useRouter, useFetch} from "@nuxtjs/composition-api"
 
 import axios from 'axios'
 
@@ -54,7 +53,6 @@ export default {
     let params = {
       page:Number(route.value.query.page) || 1
     }
-
     const updateRouterQuery = () => {
       if(Number(Number(route.value.query.page) !== currentPage.value)){
         const query = {
@@ -84,7 +82,11 @@ export default {
       await getProducts()
     }
 
-    getProducts();
+    // getProducts();
+    const { fetch } = useFetch(async () => {
+      await getProducts()
+    })
+    fetch();
 
     return {
       loading,
