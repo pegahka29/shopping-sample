@@ -9,8 +9,16 @@
         <template #cell(price)="data">
           {{ data.item.attributes.price }}
         </template>
+        <template #cell(change-value)="data">
+          <b-button pill variant="outline-danger" @click="removeFromCart(data.item)">-</b-button>
+          {{data.item.count}}
+          <b-button pill variant="outline-success" @click="addToCart(data.item)">+</b-button>
+        </template>
+        <template #cell(total-price)="data">
+          {{ data.item.attributes.price * data.item.count }}
+        </template>
         <template #cell(remove)="data">
-          <b-button variant="danger" @click="removeFromCart(data.item)">Remove</b-button>
+          <b-button variant="danger" @click="removeFromCartComplete(data.item)">Remove</b-button>
         </template>
       </b-table>
       <p>Total: {{ cartTotal }}</p>
@@ -27,12 +35,18 @@ import { storeToRefs } from 'pinia'
 import {onMounted} from "vue";
 export default {
   setup() {
-    const fields = ['name', 'price', 'remove']
+    const fields = ['name', 'price', 'change-value', 'total-price', 'remove']
     const cartStore = useCartStore()
     const { cart, cartTotal } = storeToRefs(cartStore)
 
+    const addToCart = (product) => {
+      cartStore.addToCart(product)
+    }
     const removeFromCart = (product) => {
       cartStore.removeFromCart(product)
+    }
+    const removeFromCartComplete = (product) => {
+      cartStore.removeFromCartComplete(product)
     }
 
     onMounted(() => {
@@ -43,7 +57,9 @@ export default {
       fields,
       cart,
       cartTotal,
-      removeFromCart
+      addToCart,
+      removeFromCart,
+      removeFromCartComplete,
     }
   }
 }

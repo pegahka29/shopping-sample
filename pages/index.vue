@@ -11,7 +11,14 @@
             <b-card-text>
               Price: {{ product.attributes.price }}
             </b-card-text>
-            <b-button variant="primary" @click="addToCart(product)">Add to cart</b-button>
+            <b-button
+              :class="productCount(product) > 0 ? 'btn-success': 'btn-info'"
+              @click="addToCart(product)">Add to cart
+            </b-button>
+            <span v-if="productCount(product) > 0">
+              x {{ productCount(product) }}
+              <b-button pill variant="outline-danger" @click="removeFromCart(product)">-</b-button>
+            </span>
           </b-card>
         </div>
       </div>
@@ -37,17 +44,17 @@
 </template>
 
 <script>
-import {ref, onMounted} from 'vue'
+import {ref, onMounted, computed} from 'vue'
 import {useRoute, useRouter, useFetch} from "@nuxtjs/composition-api"
-import { useCartStore } from '~/stores/cart'
-import { storeToRefs } from 'pinia'
+import {useCartStore} from '~/stores/cart'
+import {storeToRefs} from 'pinia'
 
 import axios from 'axios'
 
 export default {
   setup() {
     const cartStore = useCartStore()
-    const { cart, cartLength, cartTotal } = storeToRefs(cartStore)
+    const {cart, cartLength, cartTotal} = storeToRefs(cartStore)
     const route = useRoute();
     const router = useRouter();
     const loading = ref(false)
@@ -56,14 +63,14 @@ export default {
     const perPage = ref(25)
     const totalRows = ref(0)
     let params = {
-      page:Number(route.value.query.page) || 1
+      page: Number(route.value.query.page) || 1
     }
     const updateRouterQuery = () => {
-      if(Number(Number(route.value.query.page) !== currentPage.value)){
+      if (Number(Number(route.value.query.page) !== currentPage.value)) {
         const query = {
           page: currentPage.value,
         }
-        router.replace({ query })
+        router.replace({query})
       }
     }
     const getProducts = async () => {
@@ -89,9 +96,15 @@ export default {
     const addToCart = (product) => {
       cartStore.addToCart(product)
     }
+    const removeFromCart = (product) => {
+      cartStore.removeFromCart(product)
+    }
+    const productCount = (product) => {
+      return cartStore.productCount(product)
+    }
 
     // getProducts();
-    const { fetch } = useFetch(async () => {
+    const {fetch} = useFetch(async () => {
       await getProducts()
     })
     fetch();
@@ -111,6 +124,8 @@ export default {
       totalRows,
       changePage,
       addToCart,
+      removeFromCart,
+      productCount
     }
   },
 }
