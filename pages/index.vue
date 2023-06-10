@@ -4,14 +4,14 @@
       <h1 class="mt-3">Products</h1>
       <div v-if="products && products.length > 0" class="row">
         <div v-for="product in products" :key="product.id" class="col-md-4 mb-2">
-          <b-card :title="product.name" img-alt="Product image" img-top>
+          <b-card :title="product.attributes.name" img-alt="Product image" img-top>
             <b-card-text>
               Name: {{ product.attributes.name }}
             </b-card-text>
             <b-card-text>
               Price: {{ product.attributes.price }}
             </b-card-text>
-            <b-button variant="primary">Add to cart</b-button>
+            <b-button variant="primary" @click="addToCart(product)">Add to cart</b-button>
           </b-card>
         </div>
       </div>
@@ -27,22 +27,27 @@
         >
         </b-pagination>
       </div>
-      <b-button variant="primary" class="basket-icon" @click="$router.push('/card')">
+      <b-button variant="secondary" class="basket-icon" @click="$router.push('/cart')">
         <b-icon-basket-fill></b-icon-basket-fill>
-        <b-badge variant="light"></b-badge>
+        <b-badge variant="light">{{ cartLength }}</b-badge>
       </b-button>
+
     </div>
   </div>
 </template>
 
 <script>
-import {ref} from 'vue'
+import {ref, onMounted} from 'vue'
 import {useRoute, useRouter, useFetch} from "@nuxtjs/composition-api"
+import { useCartStore } from '~/stores/cart'
+import { storeToRefs } from 'pinia'
 
 import axios from 'axios'
 
 export default {
   setup() {
+    const cartStore = useCartStore()
+    const { cart, cartLength, cartTotal } = storeToRefs(cartStore)
     const route = useRoute();
     const router = useRouter();
     const loading = ref(false)
@@ -81,6 +86,9 @@ export default {
       params.page = page
       await getProducts()
     }
+    const addToCart = (product) => {
+      cartStore.addToCart(product)
+    }
 
     // getProducts();
     const { fetch } = useFetch(async () => {
@@ -88,13 +96,21 @@ export default {
     })
     fetch();
 
+    onMounted(() => {
+      cartStore.loadCart()
+    })
+
     return {
+      cart,
+      cartLength,
+      cartTotal,
       loading,
       products,
       currentPage,
       perPage,
       totalRows,
       changePage,
+      addToCart,
     }
   },
 }
