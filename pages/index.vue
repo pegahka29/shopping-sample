@@ -2,9 +2,9 @@
   <div class="container">
     <div class="d-flex flex-column align-content-center justify-content-center">
       <h1 class="mt-3">Products</h1>
-      <div id="itemList" v-if="products && products.length > 0" class="row">
+      <div v-if="products && products.length > 0" class="row">
         <div v-for="product in products" :key="product.id" class="col-md-4 mb-2">
-          <b-card :title="product.name" img-alt="Product image" img-top>
+          <b-card :title="product.attributes.name" img-alt="Product image" img-top>
             <b-card-text>
               Name: {{ product.attributes.name }}
             </b-card-text>
@@ -13,7 +13,7 @@
             </b-card-text>
             <b-button
               :class="productCount(product) > 0 ? 'btn-success': 'btn-info'"
-              @click="addToCart(product)">Add to card</b-button>
+              @click="addToCart(product)">Add to cart</b-button>
             <span v-if="productCount(product) > 0">
               x {{productCount(product)}}
               <b-button pill variant="outline-danger" @click="removeFromCart(product)">-</b-button>
@@ -30,7 +30,6 @@
           :per-page="perPage"
           pills
           @change="changePage"
-          aria-controls="itemList"
         >
         </b-pagination>
       </div>
